@@ -11,7 +11,7 @@ import {
 } from '../graphql/mutations'
 import UserBar from './UserBar'
 import SideBar from './SideBar'
-import { MessengerWithData } from './Messenger'
+import Messenger from './Messenger'
 
 // compose was removed in react-apollo 3.x — simple replacement
 const compose = (...fns) => x => fns.reduceRight((acc, fn) => fn(acc), x)
@@ -149,44 +149,69 @@ class ChatApp extends Component {
 
   dataPulseRef = React.createRef()
 
-  signout = e => {
-    e.preventDefault()
-    Auth.signOut()
-      .then(data => window.location.reload())
-      .catch(err => console.log(err))
+  async componentDidMount() {
+    this.init()
   }
 
-  componentDidUpdate(prevProps, prevState, snapshot) {
-    const { data: { loading, getUser } = {} } = this.props
-    console.log('run register - before', loading, getUser)
-    if (!loading && !getUser) {
-      console.log('run register', this.props.id, this.props.data.loading)
-      this.props.registerUser()
+  init = async () => {
+    const { registerUser, name, id } = this.props
+    if (id === 'demo-id') return // Skip initialization in demo mode
+    try {
+      const user = await registerUser()
+      console.log('user registered', user)
+      this.setState({ registered: true })
+    } catch (e) {
+      console.log('user already registered', e)
     }
+  }
+
+  signout = () => {
+    Auth.signOut().then(() => window.location.reload())
   }
 
   initConvo = selection => {
     console.log('initConvo', selection)
-    switch (selection.__typename) {
-      case 'User':
-        return this.startConvoWithUser({ user: selection })
-      case 'ConvoLink':
-        return this.gotoConversation({ convoLink: selection })
-      case 'Message':
-        return this.startConvoAtMessage({ message: selection })
-      default:
-        break
+    if (selection.conversation) {
+      this.gotoConversation({ convoLink: selection })
+    } else {
+      const convo = this.findConverationWithUser(selection)
+      if (convo) {
+        this.gotoConversation({ convoLink: convo })
+      } else {
+        this.createNewConversation(selection)
+      }
     }
   }
 
-  startConvoWithUser = async ({ user }) => {
-    let conversationInfo = this.findConverationWithUser(user)
-    if (!conversationInfo) {
-      console.log('no convo, launch new')
-      conversationInfo = await this.launchNewConversation(user)
-    }
-    console.log('Got the convo', conversationInfo)
-    this.setState({ ...conversationInfo, viewCN: false })
+  createNewConversation = async user => {
+    console.log('create new convo with', user)
+    const { name, id } = this.props
+    const createConvo = await this.launchNewConversation(user)
+    const createConvoLink = await this.props.createConvoLink({
+      variables: {
+        input: {
+          convoLinkUserId: id,
+          convoLinkConversationId: createConvo.id,
+          name: user.username,
+          status: 'READY'
+        }
+      }
+    })
+    console.log('createConvoLink', createConvoLink)
+    const userConvoLink = await this.props.createConvoLink({
+      variables: {
+        input: {
+          convoLinkUserId: user.id,
+          convoLinkConversationId: createConvo.id,
+          name: name,
+          status: 'READY'
+        }
+      }
+    })
+    console.log('userConvoLink', userConvoLink)
+    this.gotoConversation({
+      convoLink: createConvoLink.data.createConvoLink
+    })
   }
 
   gotoConversation = ({ convoLink }) => {
@@ -248,58 +273,7 @@ class ChatApp extends Component {
         if (createConvo.id === '-1' || convoList[`${createConvo.id}`]) {
           return
         }
-        convoList[`${createConvo.id}`] = true
-        const me = this.props.data.getUser
-        const otherChatName = chatName(me.username)
-        const myChatName = chatName(user.username)
-        const links = await Promise.all([
-          this.linkNewConversation(createConvo.id, user.id, otherChatName),
-          this.linkNewConversation(createConvo.id, me.id, myChatName)
-        ])
-        console.log('next steps', links)
-        const promises = links.map(c => this.updateToReadyConversation(c))
-        const convoLinks = await Promise.all(promises)
-        resolveFn({
-          conversation: convoLinks[0].conversation,
-          conversationName: myChatName
-        })
-      }
-    })
-    return promise
-  }
-
-  linkNewConversation = (convoId, userId, chatName) => {
-    console.log('linkNewConversation - start', convoId, userId, chatName)
-
-    let resolveFn
-    const promise = new Promise((resolve, reject) => {
-      resolveFn = resolve
-    })
-    this.props.createConvoLink({
-      variables: { convoId, userId, name: chatName },
-      optimisticResponse: {
-        createConvoLink: {
-          __typename: 'ConvoLink',
-          id: '-1',
-          status: 'PENDING',
-          name: chatName,
-          conversation: {
-            __typename: 'Conversation',
-            id: convoId,
-            name: '',
-            createdAt: '',
-            associated: {
-              __typename: 'ModelConvoLinkConnection',
-              items: []
-            }
-          }
-        }
-      },
-      update: async (proxy, { data: { createConvoLink } }) => {
-        if (createConvoLink.id === '-1') {
-          return
-        }
-        resolveFn(createConvoLink)
+        resolveFn(createConvo)
       }
     })
     return promise
@@ -364,7 +338,7 @@ class ChatApp extends Component {
     return (
       <div className={cn}>
         {/* AWS Cloud Target — fixed data pulse destination */}
-        <div className={`aws-cloud-target ${this.state.pulseActive ? 'pulse-active' : ''}`}>
+        <div className="aws-cloud-target">
           <i className="fab fa-aws" />
         </div>
 
@@ -392,12 +366,13 @@ class ChatApp extends Component {
           </div>
         </div>
         <div className="col viewer">
-          <MessengerWithData
+          <Messenger
             switchView={this.switchView}
             conversation={this.state.conversation}
             conversationName={this.state.conversationName}
             userId={this.props.id}
             onMessageSent={this.onMessageSent}
+            data={{ getConvo: { messages: { items: [] } }, loading: false }}
           />
         </div>
       </div>
@@ -434,49 +409,19 @@ const ChatAppWithData = compose(
       },
       optimisticResponse: {
         registerUser: {
-          id: props.id,
-          username: 'Standby',
-          registered: false,
           __typename: 'User',
-          userConversations: {
-            __typename: 'ModelConvoLinkConnection',
-            items: []
-          }
+          id: props.id,
+          username: props.name,
+          registered: true
         }
-      },
-      update: (proxy, { data: { registerUser } }) => {
-        const QUERY = {
-          query: getUser,
-          variables: { id: props.id }
-        }
-        const prev = proxy.readQuery(QUERY)
-        console.log('prev getUser', prev)
-        const data = {
-          ...prev,
-          getUser: { ...registerUser }
-        }
-        proxy.writeQuery({ ...QUERY, data })
       }
     })
   }),
   graphql(createConvo, {
     name: 'createConvo',
     options: props => ({
-      ignoreResults: true,
-      variables: {
-        input: { name: 'direct' }
-      },
-      optimisticResponse: {
-        createConvo: {
-          id: '-1',
-          name: 'direct',
-          createdAt: '',
-          __typename: 'Conversation',
-          associated: {
-            __typename: 'ModelConvoLinkConnection',
-            items: []
-          }
-        }
+      update: (proxy, { data: { createConvo } }) => {
+        // console.log('convo created', createConvo)
       }
     })
   }),

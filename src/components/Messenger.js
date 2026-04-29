@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import ConversationBar from './ConversationBar'
-import { InputBarWithData } from './InputBar'
+import InputBar from './InputBar'
 import MessagePane from './MessagePane'
 import { getConvo } from '../graphql/queries'
 import { graphql } from 'react-apollo'
@@ -35,10 +35,11 @@ class Messenger extends Component {
           userMap={this.getUserMap()}
           {...{ messages: messagesList, subscribeToMore, fetchMore, nextToken }}
         />
-        <InputBarWithData
+        <InputBar
           conversation={this.props.conversation}
           userId={this.props.userId}
           onMessageSent={this.props.onMessageSent}
+          createMessage={() => {}}
         />
       </React.Fragment>
     )

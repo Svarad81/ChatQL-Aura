@@ -60,46 +60,31 @@ class App extends Component {
     const info = this.userInfo()
     
     if (isPlaceholder) {
-      // Minimal dummy client to prevent sub-components from crashing
-      const dummyClient = {
-        readQuery: () => null,
-        writeQuery: () => null,
-        watchQuery: () => ({ subscribe: () => ({ unsubscribe: () => {} }) }),
-        query: () => Promise.resolve({ data: {} }),
-        mutate: () => Promise.resolve({ data: {} }),
-        subscribe: () => ({ subscribe: () => ({ unsubscribe: () => {} }) }),
-        onResetStore: () => {},
-        onClearStore: () => {},
-        stop: () => {}
-      }
-
       return (
-        <ApolloProvider client={dummyClient}>
-          <React.Fragment>
-            <div style={{
-              position: 'fixed', top: 0, left: 0, right: 0, height: '4px',
-              background: 'linear-gradient(90deg, #6366f1, #06b6d4)', zIndex: 10001
-            }} />
-            <ChatApp 
-              name={info.name} 
-              id={info.id} 
-              registerUser={() => {}}
-              createConvo={() => {}}
-              createConvoLink={() => {}}
-              updateConvoLink={() => {}}
-              data={{ 
-                getUser: { 
-                  username: 'Demo User',
-                  registered: true,
-                  userConversations: { items: [] } 
-                }, 
-                subscribeToMore: () => () => {},
-                fetchMore: () => Promise.resolve(),
-                loading: false 
-              }}
-            />
-          </React.Fragment>
-        </ApolloProvider>
+        <React.Fragment>
+          <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, height: '4px',
+            background: 'linear-gradient(90deg, #6366f1, #06b6d4)', zIndex: 10001
+          }} />
+          <ChatApp 
+            name={info.name} 
+            id={info.id} 
+            registerUser={() => {}}
+            createConvo={() => {}}
+            createConvoLink={() => {}}
+            updateConvoLink={() => {}}
+            data={{ 
+              getUser: { 
+                username: 'Demo User',
+                registered: true,
+                userConversations: { items: [] } 
+              }, 
+              subscribeToMore: () => () => {},
+              fetchMore: () => Promise.resolve(),
+              loading: false 
+            }}
+          />
+        </React.Fragment>
       )
     }
 

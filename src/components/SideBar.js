@@ -6,7 +6,7 @@ import { onUpdateConvoLink } from '../graphql/subscriptions'
 import _cloneDeep from 'lodash.clonedeep'
 import _debounce from 'lodash.debounce'
 import SideList from './ConvoSideList'
-import { SearchResultListWithData } from './SearchResultList'
+import SearchResultList from './SearchResultList'
 
 const SearchBar = ({ propsFn }) => (
   <div className="px-3 py-2 section">
@@ -116,13 +116,15 @@ export default class SideBar extends React.Component {
             <div className="scrollArea">
               <Scrollbars>
                 {isOpen ? (
-                  <SearchResultListWithData
+                  <SearchResultList
                     {...{
                       getMenuProps,
                       getItemProps,
                       conversations,
                       selectedItem,
-                      term: this.state.searchTerm
+                      term: this.state.searchTerm,
+                      userSearchData: { loading: false, searchUsers: { items: [] } },
+                      msgSearchData: { loading: false, searchMessages: { items: [] } }
                     }}
                   />
                 ) : (
