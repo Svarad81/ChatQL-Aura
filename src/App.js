@@ -12,45 +12,73 @@ import { ChatAppWithData } from './components/chatapp'
 
 Amplify.configure(awsmobile)
 
-const client = new AWSAppSyncClient({
-  url: awsmobile.aws_appsync_graphqlEndpoint,
-  region: awsmobile.aws_appsync_region,
-  auth: {
-    type: awsmobile.aws_appsync_authenticationType,
-    jwtToken: async () =>
-      (await Auth.currentSession()).getIdToken().getJwtToken()
-  },
-  complexObjectsCredentials: () => Auth.currentCredentials()
-})
+const isPlaceholder = !awsmobile.aws_user_pools_id || awsmobile.aws_user_pools_id.includes('xxxxxx')
+
+let client
+try {
+  client = new AWSAppSyncClient({
+    url: awsmobile.aws_appsync_graphqlEndpoint,
+    region: awsmobile.aws_appsync_region,
+    auth: {
+      type: awsmobile.aws_appsync_authenticationType,
+      jwtToken: async () =>
+        (await Auth.currentSession()).getIdToken().getJwtToken()
+    },
+    complexObjectsCredentials: () => Auth.currentCredentials()
+  })
+} catch (e) {
+  console.error("AppSync client initialization failed", e)
+}
 
 class App extends Component {
-  state = { session: null }
+  state = { session: null, error: null }
 
   async componentDidMount() {
-    const session = await Auth.currentSession()
-    this.setState({ session })
+    if (isPlaceholder) return
+    try {
+      const session = await Auth.currentSession()
+      this.setState({ session })
+    } catch (e) {
+      console.log('No session', e)
+    }
   }
 
   userInfo = () => {
     const session = this.state.session
     if (!session) {
-      return {}
+      return { name: 'Demo User', id: 'demo-id' }
     }
     const payload = session.idToken.payload
     return { name: payload['cognito:username'], id: payload['sub'] }
   }
 
   render() {
-    return <ChatAppWithData {...this.userInfo()} />
+    const info = this.userInfo()
+    
+    // If no client (initialization failed), we still want to show the UI
+    const content = (
+      <ChatAppWithData name={info.name} id={info.id} />
+    )
+
+    return (
+      <React.Fragment>
+        {isPlaceholder && (
+          <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, height: '4px',
+            background: 'linear-gradient(90deg, #6366f1, #06b6d4)', zIndex: 10001
+          }} />
+        )}
+        {client ? (
+          <ApolloProvider client={client}>
+            <Rehydrated>
+              {content}
+            </Rehydrated>
+          </ApolloProvider>
+        ) : content}
+      </React.Fragment>
+    )
   }
 }
 
-const WithProvider = () => (
-  <ApolloProvider client={client}>
-    <Rehydrated>
-      <App />
-    </Rehydrated>
-  </ApolloProvider>
-)
-
-export default withAuthenticator(WithProvider)
+// Bypassing withAuthenticator if it's a placeholder to show the UI overhaul
+export default isPlaceholder ? App : withAuthenticator(App)
