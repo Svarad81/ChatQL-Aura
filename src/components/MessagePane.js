@@ -59,7 +59,8 @@ const worldCloud = [
 class MessagePane extends React.Component {
   state = {
     width: 691,
-    height: 650
+    height: 650,
+    showRefresh: false
   }
   scrollbarsRef = React.createRef()
   subject = new Subject()
@@ -207,6 +208,7 @@ class MessagePane extends React.Component {
 
   render() {
     const { messages, conversation, userMap, userId } = this.props
+    const showRefresh = this.state.showRefresh
     return (
       <div className="pane bg-ligthergray">
         {conversation ? (
@@ -214,9 +216,21 @@ class MessagePane extends React.Component {
             autoHide
             autoHideTimeout={1000}
             autoHideDuration={200}
-            onScrollFrame={values => this.subject.next(values)}
+            onScrollFrame={values => {
+              this.subject.next(values)
+              // Show pull-to-refresh indicator when near top
+              if (values.top < 0.05 && this.props.nextToken) {
+                if (!this.state.showRefresh) this.setState({ showRefresh: true })
+              } else {
+                if (this.state.showRefresh) this.setState({ showRefresh: false })
+              }
+            }}
             ref={this.scrollbarsRef}
           >
+            {/* Pull-to-Refresh Indicator */}
+            <div className={`pull-to-refresh ${showRefresh ? 'visible' : ''}`}>
+              <div className="refresh-spinner" />
+            </div>
             <div className="messageList d-flex flex-column">
               {[...messages].reverse().map((msg, idx, arr) => (
                 <Message
@@ -237,7 +251,7 @@ class MessagePane extends React.Component {
               data={worldCloud}
               fontSizeMapper={fontSizeMapper}
               rotate={rotate}
-              font="Amazon Ember"
+              font="Plus Jakarta Sans"
             />
           </div>
         )}

@@ -150,7 +150,13 @@ export default class InputBar extends React.Component {
       userId
     )
 
-    this.setState({ content: '', file: undefined, popoverOpen: false }, mutator)
+    this.setState({ content: '', file: undefined, popoverOpen: false }, () => {
+      mutator()
+      // Trigger data pulse cloud-trace visual
+      if (this.props.onMessageSent) {
+        this.props.onMessageSent()
+      }
+    })
   }
 
   close = () => {

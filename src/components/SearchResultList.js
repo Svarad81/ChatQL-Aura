@@ -1,9 +1,12 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { searchMessages, searchUsers } from '../graphql/queries'
-import { graphql, compose } from 'react-apollo'
+import { graphql } from 'react-apollo'
 import BarLoader from 'react-spinners/BarLoader'
 import moment from 'moment'
+
+// compose was removed in react-apollo 3.x — simple replacement
+const compose = (...fns) => x => fns.reduceRight((acc, fn) => fn(acc), x)
 
 function formatDate(date) {
   return moment(date).calendar(null, {

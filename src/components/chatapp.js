@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { Auth } from 'aws-amplify'
-import { graphql, compose } from 'react-apollo'
+import { graphql } from 'react-apollo'
 import { getUser } from '../graphql/queries'
 import {
   registerUser,
@@ -13,11 +13,132 @@ import UserBar from './UserBar'
 import SideBar from './SideBar'
 import { MessengerWithData } from './Messenger'
 
+// compose was removed in react-apollo 3.x — simple replacement
+const compose = (...fns) => x => fns.reduceRight((acc, fn) => fn(acc), x)
+
 function chatName(userName) {
   return `${userName} (chat)`
 }
 
 const convoList = {}
+
+// ═══════════════════════════════════════════════════════
+// System Health Card — SVG Sparkline Micro-Charts
+// ═══════════════════════════════════════════════════════
+
+const generateSparklineData = (seed, points = 12) => {
+  const data = []
+  let val = 50 + (seed * 17) % 30
+  for (let i = 0; i < points; i++) {
+    val += (Math.sin(i * 0.8 + seed) * 15) + (Math.cos(i * 1.2) * 5)
+    val = Math.max(10, Math.min(90, val))
+    data.push(val)
+  }
+  return data
+}
+
+const Sparkline = ({ data, color, label, value }) => {
+  const width = 80
+  const height = 28
+  const max = Math.max(...data)
+  const min = Math.min(...data)
+  const range = max - min || 1
+  const points = data.map((d, i) => {
+    const x = (i / (data.length - 1)) * width
+    const y = height - ((d - min) / range) * (height - 4) - 2
+    return `${x},${y}`
+  }).join(' ')
+
+  return (
+    <div className="health-metric">
+      <div className="metric-sparkline">
+        <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
+          <defs>
+            <linearGradient id={`grad-${label.replace(/\s/g, '')}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity="0.2" />
+              <stop offset="100%" stopColor={color} stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <polyline
+            points={points}
+            fill="none"
+            stroke={color}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <polygon
+            points={`0,${height} ${points} ${width},${height}`}
+            fill={`url(#grad-${label.replace(/\s/g, '')})`}
+          />
+        </svg>
+      </div>
+      <span className="metric-value">{value}</span>
+      <span className="metric-label">{label}</span>
+    </div>
+  )
+}
+
+const SystemHealthCard = () => (
+  <div className="system-health-card">
+    <div className="health-title">
+      <span className="health-dot" />
+      System Health
+    </div>
+    <div className="health-metrics">
+      <Sparkline
+        data={generateSparklineData(1)}
+        color="#6366f1"
+        label="Cloud Latency"
+        value="42ms"
+      />
+      <Sparkline
+        data={generateSparklineData(7)}
+        color="#10b981"
+        label="AI Accuracy"
+        value="97.2%"
+      />
+      <Sparkline
+        data={generateSparklineData(13)}
+        color="#06b6d4"
+        label="Engagement"
+        value="84%"
+      />
+    </div>
+  </div>
+)
+
+// ═══════════════════════════════════════════════════════
+// Data Pulse Visual (triggered on message submit)
+// ═══════════════════════════════════════════════════════
+
+class DataPulse extends Component {
+  state = { pulses: [] }
+
+  fire = () => {
+    const id = Date.now()
+    this.setState(prev => ({ pulses: [...prev.pulses, id] }))
+    setTimeout(() => {
+      this.setState(prev => ({
+        pulses: prev.pulses.filter(p => p !== id)
+      }))
+    }, 1500)
+  }
+
+  render() {
+    return (
+      <div className="data-pulse-trail">
+        {this.state.pulses.map(id => (
+          <div key={id} className="data-pulse-line" />
+        ))}
+      </div>
+    )
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// Main ChatApp Component
+// ═══════════════════════════════════════════════════════
 
 class ChatApp extends Component {
   state = {
@@ -25,6 +146,8 @@ class ChatApp extends Component {
     registered: false,
     viewCN: false
   }
+
+  dataPulseRef = React.createRef()
 
   signout = e => {
     e.preventDefault()
@@ -225,18 +348,30 @@ class ChatApp extends Component {
     this.setState({ viewCN: !this.state.viewCN })
   }
 
+  onMessageSent = () => {
+    if (this.dataPulseRef.current) {
+      this.dataPulseRef.current.fire()
+    }
+  }
+
   render() {
     let { data: { subscribeToMore, getUser: user = {} } = {} } = this.props
     user = user || { name: '', registered: false }
 
     let cn = this.state.viewCN ? 'switchview' : ''
-    cn +=
-      ' ' +
-      'bg-secondary row no-gutters align-items-stretch w-100 h-100 position-absolute'
+    cn += ' chatql-app'
 
     return (
       <div className={cn}>
-        <div className="col-4 drawer bg-white">
+        {/* AWS Cloud Target — fixed data pulse destination */}
+        <div className={`aws-cloud-target ${this.state.pulseActive ? 'pulse-active' : ''}`}>
+          <i className="fab fa-aws" />
+        </div>
+
+        {/* Data Pulse Visual Layer */}
+        <DataPulse ref={this.dataPulseRef} />
+
+        <div className="col-4 drawer">
           <div className="border-right border-secondary h-100">
             <UserBar
               switchView={this.switchView}
@@ -244,6 +379,8 @@ class ChatApp extends Component {
               registered={user.registered}
               signout={this.signout}
             />
+            {/* System Health Card — injected into sidebar */}
+            <SystemHealthCard />
             <SideBar
               {...{
                 subscribeToMore,
@@ -254,12 +391,13 @@ class ChatApp extends Component {
             />
           </div>
         </div>
-        <div className="col viewer bg-white">
+        <div className="col viewer">
           <MessengerWithData
             switchView={this.switchView}
             conversation={this.state.conversation}
             conversationName={this.state.conversationName}
             userId={this.props.id}
+            onMessageSent={this.onMessageSent}
           />
         </div>
       </div>

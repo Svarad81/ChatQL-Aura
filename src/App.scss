@@ -1,49 +1,556 @@
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+// ═══════════════════════════════════════════════════════
+// ChatQL — Layout, Chat Bubbles, Animations
+// ═══════════════════════════════════════════════════════
+
+// ── Layout Container ──
+.chatql-app {
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  display: flex;
+  overflow: hidden;
 }
 
+// ── Drawer / Sidebar ──
 .drawer {
-  -webkit-animation: slide-in 0.2s ease-in;
-  -moz-animation: slide-in 0.2s ease-in;
+  animation: slideInLeft 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(255, 255, 255, 0.35) !important;
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+
+  .navbar-toggler { display: none; }
 }
 
-@-webkit-keyframes slide-in {
-  0% {
-    opacity: 0;
-    -webkit-transform: translateX(-100%);
-  }
-  100% {
-    opacity: 1;
-    -webkit-transform: translateX(0);
-  }
-}
-@-moz-keyframes slide-in {
-  0% {
-    opacity: 0;
-    -moz-transform: translateX(-100%);
-  }
-  100% {
-    opacity: 1;
-    -moz-transform: translateX(0);
-  }
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
+// ── Viewer / Main Panel ──
 .viewer {
-  .navbar-toggler {
-    display: none;
+  background: rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+
+  .navbar-toggler { display: none; }
+}
+
+// ── Sidebar Inner ──
+.drawer .border-right {
+  border-right-color: rgba(200, 205, 220, 0.25) !important;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+// ── Topbar Styling ──
+.topbar {
+  .navbar {
+    padding: 12px 16px;
+    min-height: 56px;
+    gap: 8px;
+  }
+
+  .navbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.95rem;
+
+    .fa-user-circle {
+      font-size: 1.3em;
+    }
   }
 }
 
-.drawer {
-  .navbar-toggler {
-    display: none;
+// ── Search Section ──
+.section {
+  &.sidelist {
+    padding: 0;
   }
 }
+
+.px-3.py-2.section {
+  padding: 12px 16px !important;
+
+  .form-control {
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(200, 205, 220, 0.3);
+    border-radius: 12px;
+    font-size: 0.875rem;
+
+    &:focus {
+      background: rgba(255, 255, 255, 0.8);
+    }
+  }
+}
+
+// ── Panes & Scrollbars ──
+.pane {
+  height: calc(100% - 110px);
+  overflow: hidden;
+  overflow-y: auto;
+  background: transparent !important;
+  position: relative;
+}
+
+.sidelistx, .scrollArea {
+  height: calc(100% - 54px);
+  overflow: hidden;
+  overflow-y: auto;
+}
+
+.downshift-inner {
+  height: calc(100% - 56px);
+}
+
+// ── Message List ──
+.messageList {
+  padding: 20px;
+  gap: 2px;
+}
+
+.loader {
+  color: #6366f1;
+  width: 100%;
+}
+
+// ═══════════════════════════════════════════════════════
+// Air-Bubble Chat Design
+// ═══════════════════════════════════════════════════════
+
+.chatMsg {
+  min-width: 25%;
+  max-width: 75%;
+  position: relative;
+  border: none !important;
+  animation: bubbleFadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+
+  // Remove Bootstrap box shadows and use air-bubble shadow
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04) !important;
+  border-radius: 18px !important;
+  padding: 12px 16px !important;
+  margin: 4px 12px !important;
+
+  // User messages — gradient
+  &.bg-ember {
+    background: linear-gradient(135deg, #6366f1, #818cf8) !important;
+    color: #fff;
+    border-bottom-right-radius: 6px !important;
+
+    .small { color: rgba(255, 255, 255, 0.7); }
+    .text-blue { color: rgba(255, 255, 255, 0.8) !important; }
+  }
+
+  // Other user messages — glass
+  &.bg-ampligygray {
+    background: rgba(255, 255, 255, 0.6) !important;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    color: #1e1b4b;
+    border-bottom-left-radius: 6px !important;
+
+    .small { color: #94a3b8; }
+    .font-weight-bold { color: #4f46e5; }
+  }
+
+  // Bot messages — accent glass
+  &.bg-info {
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.12), rgba(99, 102, 241, 0.08)) !important;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(6, 182, 212, 0.2) !important;
+    color: #1e1b4b;
+    border-bottom-left-radius: 6px !important;
+
+    .font-weight-bold { color: #0891b2; }
+    .small { color: #64748b; }
+  }
+}
+
+// Staggered fade-in animation
+@keyframes bubbleFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+// Apply staggered delays to messages
+.messageList .d-inline-flex {
+  &:nth-child(1) .chatMsg { animation-delay: 0s; }
+  &:nth-child(2) .chatMsg { animation-delay: 0.05s; }
+  &:nth-child(3) .chatMsg { animation-delay: 0.1s; }
+  &:nth-child(4) .chatMsg { animation-delay: 0.15s; }
+  &:nth-child(5) .chatMsg { animation-delay: 0.2s; }
+}
+
+// ── File / Image Styling ──
+.file-input-holder {
+  width: 44px;
+  position: relative;
+  display: flex !important;
+
+  input[type='file'] {
+    width: 44px;
+    height: 44px;
+    z-index: 2;
+    margin: 0;
+    opacity: 0;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+  }
+
+  label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border-radius: 12px;
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+.file-placeholder {
+  height: 200px;
+  border-radius: 12px;
+  background: rgba(30, 27, 75, 0.05) !important;
+  border: 1px solid rgba(200, 205, 220, 0.3) !important;
+}
+
+.msg-image {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+// ── Entry / Input Bar ──
+.entry {
+  .bg-light {
+    background: rgba(255, 255, 255, 0.4) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(200, 205, 220, 0.25);
+    padding: 12px 16px !important;
+  }
+
+  .form-control {
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(200, 205, 220, 0.3);
+    border-radius: 14px;
+    padding: 10px 18px;
+    min-height: 44px;
+
+    &:focus {
+      background: rgba(255, 255, 255, 0.85);
+      border-color: #818cf8;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// Data Pulse Animation (Cloud-Trace Visual)
+// ═══════════════════════════════════════════════════════
+
+.data-pulse-trail {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+.data-pulse-line {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #22d3ee;
+  box-shadow: 0 0 12px rgba(34, 211, 238, 0.6), 0 0 30px rgba(34, 211, 238, 0.3);
+  animation: dataPulseTravel 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes dataPulseTravel {
+  0% {
+    bottom: 60px;
+    left: 50%;
+    opacity: 1;
+    transform: scale(1);
+  }
+  40% {
+    bottom: 50%;
+    left: 70%;
+    opacity: 1;
+    transform: scale(1.5);
+  }
+  80% {
+    bottom: calc(100% - 40px);
+    left: calc(100% - 60px);
+    opacity: 0.8;
+    transform: scale(1.2);
+  }
+  100% {
+    bottom: calc(100% - 30px);
+    left: calc(100% - 40px);
+    opacity: 0;
+    transform: scale(0.5);
+  }
+}
+
+// ── AWS Logo Target ──
+.aws-cloud-target {
+  position: fixed;
+  top: 12px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(200, 205, 220, 0.3);
+  z-index: 10000;
+  font-size: 1rem;
+  color: #475569;
+  transition: all 0.3s ease;
+
+  &.pulse-active {
+    background: rgba(34, 211, 238, 0.15);
+    border-color: rgba(34, 211, 238, 0.4);
+    box-shadow: 0 0 20px rgba(34, 211, 238, 0.3);
+    color: #06b6d4;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// System Health Card
+// ═══════════════════════════════════════════════════════
+
+.system-health-card {
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin: 12px 16px;
+  box-shadow: 0 8px 32px rgba(100, 100, 140, 0.08);
+
+  .health-title {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #64748b;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    .health-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+      animation: healthPulse 2s ease-in-out infinite;
+    }
+  }
+
+  .health-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .health-metric {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+
+    .metric-sparkline {
+      width: 100%;
+      height: 28px;
+
+      svg {
+        width: 100%;
+        height: 100%;
+      }
+
+      path {
+        fill: none;
+        stroke-width: 1.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+    }
+
+    .metric-value {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #1e1b4b;
+    }
+
+    .metric-label {
+      font-size: 0.6rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #94a3b8;
+    }
+  }
+}
+
+@keyframes healthPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+// ═══════════════════════════════════════════════════════
+// Pull-to-Refresh Indicator
+// ═══════════════════════════════════════════════════════
+
+.pull-to-refresh {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0;
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: all 0.3s ease;
+  pointer-events: none;
+
+  &.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .refresh-spinner {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid rgba(99, 102, 241, 0.15);
+    border-top-color: #6366f1;
+    animation: spinRefresh 0.8s linear infinite;
+  }
+}
+
+@keyframes spinRefresh {
+  to { transform: rotate(360deg); }
+}
+
+// ═══════════════════════════════════════════════════════
+// Sentiment Donut Chart
+// ═══════════════════════════════════════════════════════
+
+.sentiment-gauge {
+  padding: 12px;
+
+  .gauge-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .donut-chart {
+    position: relative;
+    width: 120px;
+    height: 120px;
+
+    svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    circle {
+      fill: none;
+      stroke-width: 8;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.6s ease-in-out;
+    }
+  }
+
+  .gauge-orb {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #6366f1;
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.6), 0 0 24px rgba(99, 102, 241, 0.3);
+    transition: all 0.6s ease-in-out;
+    z-index: 5;
+  }
+
+  .gauge-center-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+
+    .gauge-emoji {
+      font-size: 1.5rem;
+      display: block;
+    }
+
+    .gauge-sentiment {
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #64748b;
+    }
+  }
+
+  .gauge-scores {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+    width: 100%;
+
+    .score-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: #475569;
+
+      .score-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+
+      .score-value {
+        font-weight: 600;
+        margin-left: auto;
+        font-variant-numeric: tabular-nums;
+      }
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// Mobile Responsive — Bottom Navigation
+// ═══════════════════════════════════════════════════════
 
 @media (max-width: 768px) {
   .drawer {
@@ -53,96 +560,186 @@
   .viewer {
     .navbar-toggler {
       display: inherit;
+      min-height: 44px;
+      min-width: 44px;
     }
   }
 
   .switchview {
     .drawer {
-      display: block !important;
+      display: flex !important;
+      flex-direction: column;
       width: 100% !important;
       max-width: 100% !important;
       flex: 0 0 100%;
+
       .navbar-toggler {
         display: inherit;
       }
     }
+
     .viewer {
       display: none !important;
     }
   }
-}
 
-.pane {
-  height: calc(100% - 110px);
-  overflow: hidden;
-  overflow-y: auto;
-}
-
-.sidelistx,
-.scrollArea {
-  height: calc(100% - 54px);
-  overflow: hidden;
-  overflow-y: auto;
-}
-.downshift-inner {
-  height: calc(100% - 56px);
-}
-
-.messageList {
-  padding: 1em;
-}
-
-.loader {
-  color: purple;
-  width: 100%;
-}
-
-.chatMsg {
-  min-width: 25%;
-  max-width: 75%;
-}
-
-.list-group-flush .list-group-item:first-child {
-  border-top: 0;
-}
-
-.list-group-flush h3 {
-  margin-bottom: 0;
-}
-
-.file-input-holder {
-  width: 42px;
-  position: relative;
-  display: flex !important;
-
-  input[type='file'] {
-    width: 42px;
-    height: 38px;
-    z-index: 2;
-    margin: 0;
-    opacity: 0;
-    overflow: hidden;
-    position: relative;
-  }
-
-  label {
-    position: absolute;
-    top: 0;
-    left: 0;
-  }
-}
-
-.file-placeholder {
-  height: 200px;
-}
-
-.msg-image {
-  max-width: 100%;
-  max-height: 300px;
-}
-
-@media (max-width: 768px) {
   .msg-image {
     max-height: 200px !important;
+    border-radius: 8px;
   }
+
+  .chatMsg {
+    max-width: 85%;
+  }
+
+  // System health card responsive
+  .system-health-card {
+    margin: 8px 12px;
+    padding: 12px 14px;
+
+    .health-metrics {
+      gap: 8px;
+    }
+  }
+
+  // Bottom navigation bar transform
+  .mobile-bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border-top: 1px solid rgba(200, 205, 220, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 16px;
+    z-index: 1000;
+    box-shadow: 0 -4px 20px rgba(100, 100, 140, 0.06);
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      min-width: 44px;
+      min-height: 44px;
+      border-radius: 12px;
+      border: none;
+      background: transparent;
+      color: #94a3b8;
+      font-size: 0.65rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      padding: 4px 12px;
+
+      i {
+        font-size: 1.15rem;
+        transition: transform 0.15s ease;
+      }
+
+      &:active {
+        transform: scale(0.9);
+
+        i {
+          transform: scale(0.95);
+        }
+      }
+
+      &.active {
+        color: #6366f1;
+        background: rgba(99, 102, 241, 0.08);
+
+        i {
+          color: #6366f1;
+        }
+      }
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// Popover Glass Override
+// ═══════════════════════════════════════════════════════
+
+.popover {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(100, 100, 140, 0.15);
+}
+
+.popover-header {
+  background: transparent;
+  border-bottom: 1px solid rgba(200, 205, 220, 0.25);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border-radius: 16px 16px 0 0;
+}
+
+.popover-body {
+  padding: 12px;
+}
+
+// ═══════════════════════════════════════════════════════
+// Conversation Bar Enhancements
+// ═══════════════════════════════════════════════════════
+
+.convo-bar {
+  .navbar {
+    background: rgba(255, 255, 255, 0.4) !important;
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border-bottom: 1px solid rgba(200, 205, 220, 0.25);
+  }
+
+  .convo-title {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #1e1b4b;
+
+    .convo-subtitle {
+      font-size: 0.75rem;
+      font-weight: 400;
+      color: #94a3b8;
+      display: block;
+    }
+  }
+
+  .aws-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(99, 102, 241, 0.06);
+    border-radius: 999px;
+    font-size: 0.75rem;
+    color: #475569;
+    border: 1px solid rgba(99, 102, 241, 0.1);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// Sentiment Card in Message — Glass Override
+// ═══════════════════════════════════════════════════════
+
+.chatMsg .card {
+  background: rgba(255, 255, 255, 0.7) !important;
+  border: 1px solid rgba(200, 205, 220, 0.3) !important;
+  border-radius: 12px !important;
+  margin-top: 8px;
+}
+
+// ── Word Cloud Placeholder ──
+.bg-ligthergray {
+  background: transparent !important;
 }

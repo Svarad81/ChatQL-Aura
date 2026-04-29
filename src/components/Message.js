@@ -337,24 +337,24 @@ export default class Message extends React.Component {
           )}
           <div>
             {this.state.sentiment && (
-              <div>
-                <div className="text-dark">
-                  <hr />
-                </div>
-                <span>
-                  <small>Sentiment Analysis:</small>
-                </span>{' '}
-                <small>
+              <div style={{ marginTop: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                  <span style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#64748b' }}>
+                    Sentiment Analysis
+                  </span>
                   <button
                     type="button"
-                    className="close text-right"
+                    style={{
+                      background: 'rgba(0,0,0,0.05)', border: 'none', borderRadius: '50%',
+                      width: '24px', height: '24px', display: 'flex', alignItems: 'center',
+                      justifyContent: 'center', cursor: 'pointer', fontSize: '0.85rem', color: '#94a3b8'
+                    }}
                     aria-label="Close"
                     onClick={() => this.setState({ sentiment: false })}
                   >
-                    <span aria-hidden="true">&times;</span>
+                    ×
                   </button>
-                </small>
-                <br />
+                </div>
                 <DetectSentiment
                   language={this.state.originalLanguage}
                   text={msg.content}

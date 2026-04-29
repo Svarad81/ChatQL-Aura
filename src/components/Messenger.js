@@ -32,6 +32,7 @@ class Messenger extends Component {
         <InputBarWithData
           conversation={this.props.conversation}
           userId={this.props.userId}
+          onMessageSent={this.props.onMessageSent}
         />
       </React.Fragment>
     )

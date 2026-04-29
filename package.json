@@ -32,8 +32,8 @@
     "uuid": "^7.0.2"
   },
   "scripts": {
-    "build-css": "node-sass-chokidar --include-path ./src --include-path ./node_modules src/ -o src/",
-    "watch-css": "npm run build-css && node-sass-chokidar --include-path ./src --include-path ./node_modules src/ -o src/ --watch --recursive",
+    "build-css": "sass --load-path=./src --load-path=./node_modules src/index.scss:src/index.css src/App.scss:src/App.css --no-source-map --style=compressed",
+    "watch-css": "npm run build-css && sass --load-path=./src --load-path=./node_modules src/index.scss:src/index.css src/App.scss:src/App.css --watch --no-source-map",
     "start-js": "react-scripts start",
     "build-js": "react-scripts build",
     "start": "npm-run-all -p watch-css start-js",
@@ -59,6 +59,7 @@
     "eslint-plugin-standard": "^4.0.1",
     "npm-run-all": "^4.1.5",
     "prettier-eslint": "^9.0.1",
+    "sass": "^1.99.0",
     "standard": "^14.3.3"
   }
 }
