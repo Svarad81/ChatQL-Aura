@@ -75,9 +75,8 @@ class App extends Component {
             </Rehydrated>
           </ApolloProvider>
         ) : (
-          <ApolloProvider client={client || {}}>
-            {content}
-          </ApolloProvider>
+          /* In demo/placeholder mode, we skip the Apollo layer to prevent crashes/hangs */
+          content
         )}
       </React.Fragment>
     )
