@@ -12,12 +12,18 @@ class Messenger extends Component {
       switchView,
       conversation,
       conversationName,
-      data: {
-        subscribeToMore,
-        fetchMore,
-        getConvo: { messages: { items: messages = [], nextToken } = {} } = {}
-      } = {}
+      data = {}
     } = this.props
+    
+    const {
+      subscribeToMore = () => {},
+      fetchMore = () => {},
+      getConvo = {}
+    } = data
+
+    const { messages = {} } = getConvo
+    const { items: messagesItems = [], nextToken } = messages
+    const messagesList = messagesItems || []
     return (
       <React.Fragment>
         <ConversationBar
@@ -27,7 +33,7 @@ class Messenger extends Component {
           conversation={this.props.conversation}
           userId={this.props.userId}
           userMap={this.getUserMap()}
-          {...{ messages, subscribeToMore, fetchMore, nextToken }}
+          {...{ messages: messagesList, subscribeToMore, fetchMore, nextToken }}
         />
         <InputBarWithData
           conversation={this.props.conversation}

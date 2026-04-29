@@ -10,7 +10,11 @@ import { Rehydrated } from 'aws-appsync-react'
 import { ApolloProvider } from 'react-apollo'
 import ChatApp, { ChatAppWithData } from './components/chatapp'
 
-Amplify.configure(awsmobile)
+try {
+  Amplify.configure(awsmobile)
+} catch (e) {
+  console.warn("Amplify configuration failed", e)
+}
 
 const isPlaceholder = !awsmobile.aws_user_pools_id || awsmobile.aws_user_pools_id.includes('xxxxxx')
 
@@ -56,22 +60,46 @@ class App extends Component {
     const info = this.userInfo()
     
     if (isPlaceholder) {
+      // Minimal dummy client to prevent sub-components from crashing
+      const dummyClient = {
+        readQuery: () => null,
+        writeQuery: () => null,
+        watchQuery: () => ({ subscribe: () => ({ unsubscribe: () => {} }) }),
+        query: () => Promise.resolve({ data: {} }),
+        mutate: () => Promise.resolve({ data: {} }),
+        subscribe: () => ({ subscribe: () => ({ unsubscribe: () => {} }) }),
+        onResetStore: () => {},
+        onClearStore: () => {},
+        stop: () => {}
+      }
+
       return (
-        <React.Fragment>
-          <div style={{
-            position: 'fixed', top: 0, left: 0, right: 0, height: '4px',
-            background: 'linear-gradient(90deg, #6366f1, #06b6d4)', zIndex: 10001
-          }} />
-          <ChatApp 
-            name={info.name} 
-            id={info.id} 
-            registerUser={() => {}}
-            createConvo={() => {}}
-            createConvoLink={() => {}}
-            updateConvoLink={() => {}}
-            data={{ user: { conversations: { items: [] } }, loading: false }}
-          />
-        </React.Fragment>
+        <ApolloProvider client={dummyClient}>
+          <React.Fragment>
+            <div style={{
+              position: 'fixed', top: 0, left: 0, right: 0, height: '4px',
+              background: 'linear-gradient(90deg, #6366f1, #06b6d4)', zIndex: 10001
+            }} />
+            <ChatApp 
+              name={info.name} 
+              id={info.id} 
+              registerUser={() => {}}
+              createConvo={() => {}}
+              createConvoLink={() => {}}
+              updateConvoLink={() => {}}
+              data={{ 
+                getUser: { 
+                  username: 'Demo User',
+                  registered: true,
+                  userConversations: { items: [] } 
+                }, 
+                subscribeToMore: () => () => {},
+                fetchMore: () => Promise.resolve(),
+                loading: false 
+              }}
+            />
+          </React.Fragment>
+        </ApolloProvider>
       )
     }
 
