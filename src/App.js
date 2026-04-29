@@ -68,13 +68,17 @@ class App extends Component {
             background: 'linear-gradient(90deg, #6366f1, #06b6d4)', zIndex: 10001
           }} />
         )}
-        {client ? (
+        {client && !isPlaceholder ? (
           <ApolloProvider client={client}>
             <Rehydrated>
               {content}
             </Rehydrated>
           </ApolloProvider>
-        ) : content}
+        ) : (
+          <ApolloProvider client={client || {}}>
+            {content}
+          </ApolloProvider>
+        )}
       </React.Fragment>
     )
   }
