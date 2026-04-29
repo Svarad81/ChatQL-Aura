@@ -8,7 +8,7 @@ import AWSAppSyncClient from 'aws-appsync'
 import { Rehydrated } from 'aws-appsync-react'
 
 import { ApolloProvider } from 'react-apollo'
-import { ChatAppWithData } from './components/chatapp'
+import ChatApp, { ChatAppWithData } from './components/chatapp'
 
 Amplify.configure(awsmobile)
 
@@ -55,30 +55,32 @@ class App extends Component {
   render() {
     const info = this.userInfo()
     
-    // If no client (initialization failed), we still want to show the UI
-    const content = (
-      <ChatAppWithData name={info.name} id={info.id} />
-    )
-
-    return (
-      <React.Fragment>
-        {isPlaceholder && (
+    if (isPlaceholder) {
+      return (
+        <React.Fragment>
           <div style={{
             position: 'fixed', top: 0, left: 0, right: 0, height: '4px',
             background: 'linear-gradient(90deg, #6366f1, #06b6d4)', zIndex: 10001
           }} />
-        )}
-        {client && !isPlaceholder ? (
-          <ApolloProvider client={client}>
-            <Rehydrated>
-              {content}
-            </Rehydrated>
-          </ApolloProvider>
-        ) : (
-          /* In demo/placeholder mode, we skip the Apollo layer to prevent crashes/hangs */
-          content
-        )}
-      </React.Fragment>
+          <ChatApp 
+            name={info.name} 
+            id={info.id} 
+            registerUser={() => {}}
+            createConvo={() => {}}
+            createConvoLink={() => {}}
+            updateConvoLink={() => {}}
+            data={{ user: { conversations: { items: [] } }, loading: false }}
+          />
+        </React.Fragment>
+      )
+    }
+
+    return (
+      <ApolloProvider client={client}>
+        <Rehydrated>
+          <ChatAppWithData name={info.name} id={info.id} />
+        </Rehydrated>
+      </ApolloProvider>
     )
   }
 }
